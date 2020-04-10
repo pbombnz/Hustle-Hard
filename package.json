@@ -1,0 +1,27 @@
+{
+  "name": "hu-tle-hard-api-documentation",
+  "version": "1.0.0",
+  "description": "Displays all API documentation for the Hustle Hard Website",
+  "main": "index.js",
+  "scripts": {
+    "prestart": "npm install",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "swagger"
+  ],
+  "license": "Unlicense",
+  "private": true,
+  "dependencies": {
+    "bcrypt": "^4.0.1",
+    "camelcase-keys": "^6.2.2",
+    "connect": "^3.2.0",
+    "get-routes": "^2.0.0",
+    "js-yaml": "^3.3.0",
+    "oas3-tools": "^2.0.2",
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0",
+    "pg": "^8.0.0",
+    "pg-format": "^1.0.4"
+  }
+}
