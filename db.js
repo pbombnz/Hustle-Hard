@@ -20,12 +20,15 @@ const _query = async (text, params) => {
     } catch (error) {
         const duration = Date.now() - start
         console.error('QUERY FAILED: ', { text, duration, error: error.stack })
-        throw error;
     }
 }
 
 const _getUser = async (idColumn, idValue) => {
-    const sql = format('SELECT * FROM users WHERE %I = %L', idColumn, idValue)
+    const sql = format(
+        'SELECT u.id, uatt.value as login_method, u.username, u.password, u.given_name, u.family_name, u.email, u.address, u.phone_number_e164, u.created_on, u.banned, u.banned_by, u.banned_reason FROM users u ' +
+        'INNER JOIN user_account_types_t uatt ON uatt.id = u.account_type ' +
+        'WHERE u.%I = %L'
+        , idColumn, idValue)
     const userResults = await _query(sql)
     if (userResults.rowCount === 0) { return null } 
     const user = userResults.rows[0]
