@@ -1,9 +1,9 @@
 defaults: &defaults
   api:
-    port: 3000
+    port: 8080
 
   logger:
-    name: Hu$tle Hard API Documentation
+    name: Auction API
     level: debug
     levels:
       trace:

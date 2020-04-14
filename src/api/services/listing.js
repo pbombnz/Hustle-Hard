@@ -1,61 +1,51 @@
-const ServerError = require('../../lib/error');
-/**
- * @param {Object} options
- * @param {Integer} options.id 
- * @throws {Error}
- * @return {Promise}
- */
-module.exports.getListingBiddings = async (options) => {
-  // Implement your business logic here...
-  //
-  // This function should return as follows:
-  //
-  // return {
-  //   status: 200, // Or another success code.
-  //   data: [] // Optional. You can put whatever you want here.
-  // };
-  //
-  // If an error happens during your business logic implementation,
-  // you should throw an error as follows:
-  //
-  // throw new ServerError({
-  //   status: 500, // Or another error code.
-  //   error: 'Server Error' // Or another error message.
-  // });
+const db = require('../../lib/db')
 
-  return {
-    status: 200,
-    data: 'getListingBiddings ok!'
-  };
-};
+const ServerError = require('../../lib/error')
 
 /**
- * @param {Object} options
- * @param {Integer} options.id 
- * @throws {Error}
- * @return {Promise}
+ * @param {!number} id The ID of a listing the bid will placed on.
+ * @throws {Error} Occurs when the SQL selection failed, which happens the listing ID does not exist.
+ * @return {Promise} Returns the bidding information descending by date created/bid amount.
  */
-module.exports.createListingBid = async (options) => {
-  // Implement your business logic here...
-  //
-  // This function should return as follows:
-  //
-  // return {
-  //   status: 200, // Or another success code.
-  //   data: [] // Optional. You can put whatever you want here.
-  // };
-  //
-  // If an error happens during your business logic implementation,
-  // you should throw an error as follows:
-  //
-  // throw new ServerError({
-  //   status: 500, // Or another error code.
-  //   error: 'Server Error' // Or another error message.
-  // });
+module.exports.getListingBiddings = async (id) => {
+    try {
+        const res = await db.query('SELECT u.username, lb.bid_amount, lb.created_on ' +
+            'FROM listing_bids lb ' +
+            'INNER JOIN users u ON lb.user_id = u.id ' +
+            'WHERE listing_id=$1 ' +
+            'ORDER BY created_on DESC', [id])
 
-  return {
-    status: 200,
-    data: 'createListingBid ok!'
-  };
-};
+        if (res.rowCount === 0) {
+            throw new ServerError()
+        }
 
+        return {
+            status: 200,
+            data: res.rows
+        }
+    } catch (err) {
+        throw new ServerError({
+            code: 400,
+            error: `No listing associated with ID ${id}.`
+        })
+    }
+}
+
+/**
+ * @param {!number} id The ID of a listing the bid will placed on.
+ * @param {!number} userId The ID of a user who is placing the bid.
+ * @param {!number} bidAmount The amount to bid.
+ * @throws {Error} Occurs when the SQL insertion failed, which happens the bid placed is lower than the current bid.
+ * @return {Promise} A 204 Status signalling to the user that the bid was successful.
+ */
+module.exports.createListingBid = async (id, userId, bidAmount) => {
+    try {
+        await db.query('INSERT INTO listing_bids(listing_id, user_id, bid_amount) VALUES ($1, $2, $3)', [id, userId, bidAmount])
+        return { status: 204 }
+    } catch (err) {
+        throw new ServerError({
+            code: 400,
+            error: 'A higher bid has already been placed for this listing.'
+        })
+    }
+}

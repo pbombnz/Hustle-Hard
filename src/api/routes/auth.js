@@ -1,79 +1,40 @@
-const express = require('express');
-const passport = require("passport");
-const auth = require('../services/auth');
+const express = require('express')
+const passport = require('passport')
+const middleware = require('../../lib/middleware')
 
-const router = new express.Router();
+const ServerError = require('../../lib/error')
 
-
-/**
- * 
- */
-router.post('/login/email', passport.authenticate('local'), async (req, res, next) => {
-  /*    passport.authenticate('local', { session: true } , (err, user, info) => {
-        if (err) { return next(err) }
-        if(!user) { return res.status(400).send() }   
-
-        req.login(user, (err) => {
-            if (err) { return res.status(400).send(); }
-            return res.status(204).send()
-        })
-    })(req, res, next)*/
-
-  const options = {
-    body: req.body
-  };
-
-  try {
-    const result = await auth.authUserViaEmail(options);
-    res.status(result.status || 200).send(result.data);
-  } catch (err) {
-    return res.status(500).send({
-      status: 500,
-      error: 'Server Error'
-    });
-  }
-});
+const router = new express.Router()
 
 /**
- * 
+ * Authenticates a user via traditional credentials.
  */
-router.post('/login/pki', async (req, res, next) => {
-  const options = {
-  };
-
-  try {
-    const result = await auth.authUserViaPki(options);
-    res.status(result.status || 200).send(result.data);
-  } catch (err) {
-    return res.status(500).send({
-      status: 500,
-      error: 'Server Error'
-    });
-  }
-});
+router.post('/login/email',
+    middleware.auth.isNotAuthenticated,
+    passport.authenticate('local', { failWithError: true }),
+    async (req, res, next) => {
+        return res.status(200).json({ success: true })
+    },
+    async (_err, req, res, next) => {
+        next(new ServerError({
+            status: 401,
+            error: 'Authentication failed.'
+        }))
+    })
 
 /**
- * 
+ * PKI is not implemented yet.
  */
-router.post('/logout', async (req, res, next) => {
-  //   if(req.isAuthenticated()) {
-  //     req.logout();
-  //     return res.status(204).send()
-  // }
-  // return res.status(401).send()
-  
-  const options = {
-  };
+router.post('/login/pki', middleware.auth.isNotAuthenticated, async (req, res, next) => {
+    return res.status(501).send()
+})
 
-  try {
-    const result = await auth.logoutUser(options);
-    res.status(result.status || 200).send(result.data);
-  } catch (err) {
-    return res.status(500).send({
-      status: 500,
-      error: 'Server Error'
-    });
-  }
-});
+/**
+ * Logs out an authenticated user.
+ */
+router.post('/logout', middleware.auth.isAuthenticated, async (req, res, next) => {
+    req.logout()
+    return res.status(200).json({ success: true })
+})
 
-module.exports = router;
+module.exports = router
