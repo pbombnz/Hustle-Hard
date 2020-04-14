@@ -7,13 +7,13 @@ import ServerError from '../../lib/error'
  * @throws {Error} Occurs when the SQL selection failed, which happens the listing ID does not exist.
  * @return {Promise} Returns the bidding information descending by date created/bid amount.
  */
-export const getListingBiddings = async (id) => {
+export const getListingBiddings = async (id: number): Promise<any> => {
     try {
         const res = await db.query('SELECT u.username, lb.bid_amount, lb.created_on ' +
             'FROM listing_bids lb ' +
             'INNER JOIN users u ON lb.user_id = u.id ' +
             'WHERE listing_id=$1 ' +
-            'ORDER BY created_on DESC', [id])
+            'ORDER BY created_on DESC', [id.toString()])
 
         if (res.rowCount === 0) {
             throw new ServerError()
@@ -38,9 +38,9 @@ export const getListingBiddings = async (id) => {
  * @throws {Error} Occurs when the SQL insertion failed, which happens the bid placed is lower than the current bid.
  * @return {Promise} A 204 Status signalling to the user that the bid was successful.
  */
-export const createListingBid = async (id, userId, bidAmount) => {
+export const createListingBid = async (id: number, userId: number, bidAmount: number): Promise<any> => {
     try {
-        await db.query('INSERT INTO listing_bids(listing_id, user_id, bid_amount) VALUES ($1, $2, $3)', [id, userId, bidAmount])
+        await db.query('INSERT INTO listing_bids(listing_id, user_id, bid_amount) VALUES ($1, $2, $3)', [id.toString(), userId.toString(), bidAmount.toString()])
         return { status: 204 }
     } catch (err) {
         throw new ServerError({

@@ -16,7 +16,7 @@ router.get('/:listingId', async (req: express.Request, res: express.Response, ne
         const result = await ordersByListing.getOrdersByListingId(options)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
-        return res.status(500).send({
+        res.status(500).send({
             status: 500,
             error: 'Server Error'
         })

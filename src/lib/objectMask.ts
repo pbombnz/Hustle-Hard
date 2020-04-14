@@ -17,7 +17,7 @@ interface MaskingOption {
  * @param {Array<RegExp | MaskingOption>} options
  */
 export default (object: Record<string, any>, options: Array<RegExp | MaskingOption>): object => {
-    const deep = flatten(object)
+    const deep: Record<string, any> = flatten<Record<string, any>, Record<string, any>>(object)
 
     // Converts all string-based elements into MaskingOptions
     const _options: Array<MaskingOption> = options.map((opt) => opt instanceof RegExp ? { match: opt } : opt)

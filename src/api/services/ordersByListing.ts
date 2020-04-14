@@ -5,7 +5,7 @@ import ServerError from '../../lib/error'
  * @throws {Error}
  * @return {Promise}
  */
-export const getOrdersByListingId = async (options: Record<string, any>): Promise<Record<string, any>> => {
+export const getOrdersByListingId = async (options: Record<string, any>): Promise<any> => {
     // Implement your business logic here...
     //
     // This function should return as follows:
