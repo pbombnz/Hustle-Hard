@@ -9,9 +9,9 @@ export default (config: any): Logger => {
 
     for (const level of levels) {
         const bunyanLevel = config.levels[level]
-        if (!bunyanLevel) return
+        if (!bunyanLevel) continue
 
-        if (level === 'debug' && config.level !== 'debug') return
+        if (level === 'debug' && config.level !== 'debug') continue
 
         // @ts-ignore
         const logger: Stream = { level }
@@ -23,7 +23,7 @@ export default (config: any): Logger => {
         } else if (bunyanLevel) {
             logger.path = bunyanLevel
         } else {
-            return
+            continue
         }
 
         bunyanConfig.push(logger)

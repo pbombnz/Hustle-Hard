@@ -57,7 +57,7 @@ const LocalStrategy = passportLocal.Strategy
 debug.enable('*')
 
 const log = logger(config.logger)
-const app = express()
+const app: express.Express = express()
 
 app.use(helmet())
 app.use(bodyParser.json())
@@ -134,4 +134,4 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     res.status(status).json({ status, error: msg })
 })
 
-module.exports = app
+export default app
