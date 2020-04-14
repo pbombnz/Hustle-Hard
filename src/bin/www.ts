@@ -41,7 +41,8 @@ const server = http.createServer(app)
 /**
  * Event listener for HTTP server "error" event.
  */
-const onError = (error: any): never => {
+const onError = (error: Error): never => {
+    // @ts-ignore
     if (error.syscall !== 'listen') {
         throw error
     }
@@ -49,6 +50,7 @@ const onError = (error: any): never => {
     const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`
 
     // handle specific listen errors with friendly messages
+    // @ts-ignore
     switch (error.code) {
     case 'EACCES':
         log.fatal(`${bind} requires elevated privileges`)
@@ -66,8 +68,10 @@ const onError = (error: any): never => {
  */
 const onListening = (): void => {
     const addr = server.address()
-    const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`
-    log.debug(`Listening on ${bind}`)
+    if (addr !== null) {
+        const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`
+        log.debug(`Listening on ${bind}`)
+    }
 }
 
 // Listen on provided port, on all network interfaces.
