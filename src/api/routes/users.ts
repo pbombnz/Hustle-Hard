@@ -1,14 +1,15 @@
-const express = require('express')
-const users = require('../services/users')
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import * as express from 'express'
+import * as users from '../services/users'
 
-const middleware = require('../../lib/middleware')
+import middleware from '../../lib/middleware'
 
-const router = new express.Router()
+const router: express.Router = express.Router()
 
 /**
  * Registers a new user.
  */
-router.post('/', middleware.auth.isNotAuthenticated, async (req, res, next) => {
+router.post('/', middleware.auth.isNotAuthenticated, async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
     const options = {
         body: req.body
     }
@@ -17,7 +18,7 @@ router.post('/', middleware.auth.isNotAuthenticated, async (req, res, next) => {
         const result = await users.registerUser(options)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
-        return res.status(500).send({
+        res.status(500).send({
             status: 500,
             error: 'Server Error'
         })
@@ -27,14 +28,14 @@ router.post('/', middleware.auth.isNotAuthenticated, async (req, res, next) => {
 /**
  * Returns the authenicated user's own information.
  */
-router.get('/', middleware.auth.isAuthenticated, async (req, res, next) => {
-    return res.status(200).json(req.user)
+router.get('/', middleware.auth.isAuthenticated, async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
+    res.status(200).json(req.user)
 })
 
 /**
  * Returns the authenicated user's own information.
  */
-router.put('/', async (req, res, next) => {
+router.put('/', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
     const options = {
         body: req.body
     }
@@ -43,7 +44,7 @@ router.put('/', async (req, res, next) => {
         const result = await users.updateUser(options)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
-        return res.status(500).send({
+        res.status(500).send({
             status: 500,
             error: 'Server Error'
         })
@@ -55,7 +56,7 @@ router.put('/', async (req, res, next) => {
  * is expiring and/or if they have been outbidded. This action
  * is similar to user bookmarking a webpage in a browser.
  */
-router.get('/watchlists', async (req, res, next) => {
+router.get('/watchlists', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
     const options = {
     }
 
@@ -67,4 +68,4 @@ router.get('/watchlists', async (req, res, next) => {
     }
 })
 
-module.exports = router
+export default router

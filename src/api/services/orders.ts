@@ -1,10 +1,10 @@
-const ServerError = require('../../lib/error')
+import ServerError from '../../lib/error'
 /**
  * @param {Object} options
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.getOrders = async (options) => {
+export const getOrders = async (options: Record<string, any>): Promise<Record<string, any>> => {
     // Implement your business logic here...
     //
     // This function should return as follows:
@@ -33,7 +33,7 @@ module.exports.getOrders = async (options) => {
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.createOrder = async (options) => {
+export const createOrder = async (options: Record<string, any>): Promise<Record<string, any>> => {
     // Implement your business logic here...
     //
     // This function should return as follows:
@@ -63,7 +63,7 @@ module.exports.createOrder = async (options) => {
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.getOrderById = async (options) => {
+export const getOrderById = async (options: Record<string, any>): Promise<Record<string, any>> => {
     // Implement your business logic here...
     //
     // This function should return as follows:
@@ -93,7 +93,7 @@ module.exports.getOrderById = async (options) => {
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.updateOrder = async (options) => {
+export const updateOrder = async (options: Record<string, any>): Promise<Record<string, any>> => {
     // Implement your business logic here...
     //
     // This function should return as follows:

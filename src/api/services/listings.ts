@@ -1,9 +1,9 @@
-const pgFormat = require('pg-format')
-const snakeCaseKeys = require('snakecase-keys')
+import pgFormat from 'pg-format'
+import snakeCaseKeys from 'snakecase-keys'
 
-const db = require('../../lib/db')
+import * as db from '../../lib/db'
 
-const ServerError = require('../../lib/error')
+import ServerError from '../../lib/error'
 
 /**
  * An object containing infomration about a Listing.
@@ -39,7 +39,8 @@ const ServerError = require('../../lib/error')
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.createListing = async (data) => {
+export const createListing = async (data: Record<string, any>): Promise<any> => {
+    if (data.id) { delete data.id }
     if (data.status === null) { delete data.status }
     if (data.createdOn === null) { delete data.createdOn }
     if (data.photoIds === null) { delete data.photoIds }
@@ -87,7 +88,7 @@ module.exports.createListing = async (data) => {
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.getListings = async () => {
+export const getListings = async () => {
     try {
         const res = await db.query('SELECT * FROM listings')
         return {
@@ -106,9 +107,9 @@ module.exports.getListings = async () => {
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.getListing = async (id) => {
+export const getListing = async (id: number): Promise<any> => {
     try {
-        const res = await db.query('SELECT * FROM listings WHERE id = $1', [id])
+        const res = await db.query('SELECT * FROM listings WHERE id = $1', [id.toString()])
         if (res.rowCount === 0) {
             throw new ServerError({
                 code: 400,
@@ -136,7 +137,7 @@ module.exports.getListing = async (id) => {
  * @throws {Error}
  * @return {Promise}
  */
-module.exports.updateListing = async (id, body) => {
+export const updateListing = async (id: number, body: Record<string, any>): Promise<any> => {
     // Implement your business logic here...
     //
     // This function should return as follows:

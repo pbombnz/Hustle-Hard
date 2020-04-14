@@ -1,12 +1,12 @@
-const express = require('express')
-const files = require('../services/files')
+import * as express from 'express'
+import * as files from '../services/files'
 
-const router = new express.Router()
+const router = express.Router()
 
 /**
  * Retrieves an image specified by the Image ID given.
  */
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
     const options = {
         id: req.params.id
     }
@@ -22,7 +22,7 @@ router.get('/:id', async (req, res, next) => {
 /**
  *
  */
-router.post('/', async (req, res, next) => {
+router.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
     const options = {
         body: req.body
     }
@@ -31,11 +31,11 @@ router.post('/', async (req, res, next) => {
         const result = await files.uploadFile(options)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
-        return res.status(500).send({
+        res.status(500).send({
             status: 500,
             error: 'Server Error'
         })
     }
 })
 
-module.exports = router
+export default router
