@@ -3,14 +3,11 @@
   "version": "1.0.0",
   "description": "Displays all API documentation for the Auction Website",
   "scripts": {
-    "prestart": "npm install",
-    "start": "node src/bin/www",
-    "dev": "node src/bin/www | bunyan",
-    "tsc": "tsc"
+    "postinstall": "tsc",
+    "watch": "tsc -w",
+    "start": "node ./dist/bin/www.js",
+    "debug": "nodemon --watch ./dist --inspect=0.0.0.0:9222 --nolazy ./dist/bin/www.js | ./node_modules/.bin/bunyan"
   },
-  "keywords": [
-    "swagger"
-  ],
   "license": "Unlicense",
   "private": true,
   "dependencies": {
@@ -26,14 +23,14 @@
     "flat": "^5.0.0",
     "helmet": "^3.22.0",
     "js-yaml": "^3.3.0",
+    "knex": "^0.20.15",
     "lodash": "^4.17.15",
     "node-yaml-config": "^0.0.5",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "pg": "^8.0.2",
     "pg-format": "^1.0.4",
-    "snakecase-keys": "^3.1.2",
-    "typescript": "^3.8.3"
+    "snakecase-keys": "^3.1.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^3.0.0",
@@ -44,6 +41,7 @@
     "@types/express-session": "^1.17.0",
     "@types/flat": "^5.0.0",
     "@types/helmet": "0.0.45",
+    "@types/knex": "^0.16.1",
     "@types/lodash": "^4.14.149",
     "@types/passport": "^1.0.3",
     "@types/passport-local": "^1.0.33",
@@ -56,6 +54,8 @@
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1"
+    "eslint-plugin-standard": "^4.0.1",
+    "nodemon": "^1.11.0",
+    "typescript": "^3.8.3"
   }
 }

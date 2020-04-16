@@ -1,15 +1,17 @@
-import { query } from '../../lib/db'
+import * as Schemas from '../../definitions'
+
+import knex from '../../lib/db'
 import format from 'pg-format'
 import ServerError from '../../lib/error'
 
 import camelcaseKeys from 'camelcase-keys'
 
 /**
- * @param {Object} options
+ * @param {Schemas.Entity.User} data
  * @throws {Error}
  * @return {Promise}
  */
-export const registerUser = async (options: Record<string, any>): Promise<Record<string, any>> => {
+export const registerUser = async (data: Schemas.Entity.User): Promise<Record<string, any>> => {
     // Implement your business logic here...
     //
     // This function should return as follows:
@@ -27,9 +29,12 @@ export const registerUser = async (options: Record<string, any>): Promise<Record
     //   error: 'Server Error' // Or another error message.
     // });
 
+    // Create User
+    // const res = await query('');
+
     return {
         status: 200,
-        data: 'registerUser ok!'
+        data
     }
 }
 
@@ -39,40 +44,44 @@ export const registerUser = async (options: Record<string, any>): Promise<Record
  * @return {Promise}
  */
 export const getUser = async (options: { id?: number; username?: string; email?: string}): Promise<Record<string, any>> => {
-    // Produce WHERE condition based on options paraemter.
-    const optionsEntries = Object.entries(options)
-    const strBuilder = [' ']
-    const fmtArgs = []
-    for (let i = 0; i < optionsEntries.length; i++) {
-        strBuilder.push('u.%I = %L', ' AND ')
-        fmtArgs.push(...optionsEntries[i])
-    }
-    // Remove last/trailing ' AND ' element.
-    strBuilder.pop()
-    const sqlWhereCondition: string = format(strBuilder.join(), ...fmtArgs)
+    // Retrieve the user information.
+    const userResults = await knex
+        .select(
+            knex.ref('id').withSchema('users'),
+            knex.ref('value').withSchema('user_account_types_t').as('type'),
+            knex.ref('password').withSchema('users'),
+            knex.ref('given_name').withSchema('users'),
+            knex.ref('family_name').withSchema('users'),
+            knex.ref('email').withSchema('users'),
+            knex.ref('address').withSchema('users'),
+            knex.ref('phone_number_e164').withSchema('users'),
+            knex.ref('created_on').withSchema('users'),
+            knex.ref('banned').withSchema('users'),
+            knex.ref('banned_by').withSchema('users'),
+            knex.ref('banned_reason').withSchema('users')
+        )
+        .from('users')
+        .innerJoin('user_account_types_t', 'users.id', 'user_account_types_t.user_id')
+        .where(options)
 
-    const sql = format(
-        'SELECT u.id, uatt.value as login_method, u.username, u.password, u.given_name, u.family_name, u.email, u.address, u.phone_number_e164, u.created_on, u.banned, u.banned_by, u.banned_reason ' +
-        'FROM users u ' +
-        'INNER JOIN user_account_types_t uatt ON uatt.id = u.account_type ' +
-        'WHERE ' + sqlWhereCondition
-    )
-    const userResults = await query(sql)
-
-    if (userResults.rowCount === 0) {
+    // Throw an error if no user was found.
+    if (userResults.length === 0) {
         throw new ServerError({
             status: 400,
             error: 'Cannot find a user associated with the query specified.'
         })
     }
 
-    const user = userResults.rows[0]
-    const userRolesResults = await query(
-        'SELECT urt.value as role ' +
-        'FROM user_roles ur ' +
-        'INNER JOIN user_roles_t urt ON ur.role_id = urt.id ' +
-        'WHERE ur.user_id = $1', [user.id])
-    user.roles = userRolesResults.rows.map((value) => value.role)
+    // Retrieve the user role information.
+    const user = userResults[0]
+    const userRolesResults = await knex
+        .select(
+            knex.ref('value').withSchema('user_roles_t').as('role')
+        )
+        .from('user_roles')
+        .innerJoin('user_roles_t', 'user_roles_t.id', '=', 'user_roles.id')
+        .where('user_roles.user_id', user.id)
+    user.roles = userRolesResults.map((value) => value.role)
 
     return {
         status: 200,
@@ -110,11 +119,11 @@ export const updateUser = async (options: Record<string, any>): Promise<Record<s
 }
 
 /**
- * @param {Object} options
+ * @param {number} userId
  * @throws {Error}
  * @return {Promise}
  */
-export const getUserListingWatchlist = async (options: Record<string, any>): Promise<Record<string, any>> => {
+export const getUserListingWatchlist = async (userId: number): Promise<any> => {
     // Implement your business logic here...
     //
     // This function should return as follows:

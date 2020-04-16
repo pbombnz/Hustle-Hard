@@ -1,7 +1,7 @@
 import pgFormat from 'pg-format'
 import snakeCaseKeys from 'snakecase-keys'
 
-import * as db from '../../lib/db'
+import knex from '../../lib/db'
 
 import ServerError from '../../lib/error'
 
@@ -45,23 +45,9 @@ export const createListing = async (data: Record<string, any>): Promise<any> => 
     if (data.createdOn === null) { delete data.createdOn }
     if (data.photoIds === null) { delete data.photoIds }
 
-    data = snakeCaseKeys(data)
-    const dataEntries = Object.entries(data)
-    const identifiers = []
-    const literals = []
-    const keys = []
-    const values = []
-    for (let i = 0; i < dataEntries.length; i++) {
-        identifiers.push('%I')
-        literals.push('%L')
-        keys.push(dataEntries[i][0])
-        values.push(dataEntries[i][1])
-    }
-    const sql = pgFormat(`INSERT INTO listings(${identifiers.join(', ')}) VALUES (${literals.join(', ')}) RETURNING id`, ...keys, ...values)
-
     try {
-        const res = await db.query(sql)
-        if (res.rowCount === 0) {
+        const res = await knex.insert(snakeCaseKeys(data)).into('listing').returning('id')
+        if (res.length === 0) {
             throw new ServerError({
                 code: 400,
                 message: 'The listing could not be created.'
@@ -69,7 +55,8 @@ export const createListing = async (data: Record<string, any>): Promise<any> => 
         }
         return {
             status: 200,
-            data: { id: res.rows[0].id }
+            // @ts-ignore
+            data: { id: res[0].id }
         }
     } catch (err) {
         if (err instanceof ServerError) {
@@ -88,12 +75,12 @@ export const createListing = async (data: Record<string, any>): Promise<any> => 
  * @throws {Error}
  * @return {Promise}
  */
-export const getListings = async () => {
+export const getListings = async (): Promise<any> => {
     try {
-        const res = await db.query('SELECT * FROM listings')
+        const res: any[] = await knex.select('*').from('listings')
         return {
             status: 200,
-            data: res.rows
+            data: res
         }
     } catch (err) {
         throw new ServerError({
@@ -109,8 +96,8 @@ export const getListings = async () => {
  */
 export const getListing = async (id: number): Promise<any> => {
     try {
-        const res = await db.query('SELECT * FROM listings WHERE id = $1', [id.toString()])
-        if (res.rowCount === 0) {
+        const res = await knex.select('*').from('listings').where('id', id)
+        if (res.length === 0) {
             throw new ServerError({
                 code: 400,
                 error: `No listing found with ID ${id}.`
@@ -118,7 +105,7 @@ export const getListing = async (id: number): Promise<any> => {
         }
         return {
             status: 200,
-            data: res.rows[0]
+            data: res[0]
         }
     } catch (err) {
         if (err instanceof ServerError) {

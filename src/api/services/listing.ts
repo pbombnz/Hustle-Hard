@@ -1,4 +1,6 @@
-import * as db from '../../lib/db'
+import knex from '../../lib/db'
+
+import snakecaseKeys from 'snakecase-keys'
 
 import ServerError from '../../lib/error'
 
@@ -9,19 +11,24 @@ import ServerError from '../../lib/error'
  */
 export const getListingBiddings = async (id: number): Promise<any> => {
     try {
-        const res = await db.query('SELECT u.username, lb.bid_amount, lb.created_on ' +
-            'FROM listing_bids lb ' +
-            'INNER JOIN users u ON lb.user_id = u.id ' +
-            'WHERE listing_id=$1 ' +
-            'ORDER BY created_on DESC', [id.toString()])
+        const res = await knex
+            .select(
+                knex.ref('username').withSchema('users').as('username'),
+                knex.ref('bid_amount').withSchema('listing_bids').as('bid_amount'),
+                knex.ref('created_on').withSchema('listing_bids').as('created_on')
+            )
+            .from('listing_bids')
+            .innerJoin('users', 'users.user_id', '=', 'listing_bids.user_id')
+            .where('listing_bids.listing_id', id)
+            .orderBy('created_on', 'desc')
 
-        if (res.rowCount === 0) {
+        if (res.length === 0) {
             throw new ServerError()
         }
 
         return {
             status: 200,
-            data: res.rows
+            data: res
         }
     } catch (err) {
         throw new ServerError({
@@ -40,7 +47,9 @@ export const getListingBiddings = async (id: number): Promise<any> => {
  */
 export const createListingBid = async (id: number, userId: number, bidAmount: number): Promise<any> => {
     try {
-        await db.query('INSERT INTO listing_bids(listing_id, user_id, bid_amount) VALUES ($1, $2, $3)', [id.toString(), userId.toString(), bidAmount.toString()])
+        await knex
+            .insert(snakecaseKeys({ id, userId, bidAmount }))
+            .into('listing_bids')
         return { status: 204 }
     } catch (err) {
         throw new ServerError({

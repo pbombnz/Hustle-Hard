@@ -15,7 +15,7 @@ import objectMask from '../lib/objectMask'
 /*
  * Database
  */
-import * as db from '../lib/db'
+import knex from '../lib/db'
 
 /*
  * Express Related
@@ -66,6 +66,8 @@ app.use(cookieParser())
 app.use(session({
     secret: 'secrect',
     name: 'SESSIONID',
+    saveUninitialized: false,
+    resave: false,
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000
     }
@@ -89,8 +91,8 @@ passport.deserializeUser<Record<string, any>, number>(async (id, done) => {
 passport.use(new LocalStrategy(
     async (username, password, done) => {
         try {
-            const res = await db.query('SELECT password FROM users WHERE username = $1', [username])
-            const hash = res.rows[0].password
+            const rows = await knex.select('password').from('users').where('username', username)
+            const hash = rows[0].password
             const match = await bcrypt.compare(password, hash)
             if (match) {
                 try {
