@@ -36,7 +36,7 @@ router.get('/',
 )
 
 /**
- * Returns the authenicated user's own information.
+ * Update the authenicated user's own information.
  */
 router.put('/',
     middleware.auth.isAuthenticated,

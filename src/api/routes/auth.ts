@@ -41,7 +41,10 @@ router.post('/logout',
     middleware.auth.isAuthenticated,
     async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         req.logout()
-        return res.status(200).json({ success: true })
+        return res.status(200).json({
+            status: 200,
+            success: true
+        })
     }
 )
 
