@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Displays all API documentation for the Auction Website",
   "scripts": {
-    "postinstall": "tsc",
-    "watch": "tsc -w",
+    "prestart": "rimraf ./dist && tsc",
     "start": "node ./dist/bin/www.js",
-    "debug": "nodemon --watch ./dist --inspect=0.0.0.0:9222 --nolazy ./dist/bin/www.js | ./node_modules/.bin/bunyan"
+    "debug-nodemon": "nodemon",
+    "debug-node": "npm run prestart && node --inspect=0.0.0.0:9229 ./dist/bin/www.js"
   },
   "license": "Unlicense",
   "private": true,
@@ -30,6 +30,7 @@
     "passport-local": "^1.0.0",
     "pg": "^8.0.2",
     "pg-format": "^1.0.4",
+    "rimraf": "^3.0.2",
     "snakecase-keys": "^3.1.2"
   },
   "devDependencies": {
