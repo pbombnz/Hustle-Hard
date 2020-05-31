@@ -1,40 +1,56 @@
-import * as Schemas from '../../definitions'
+import { User, Listing } from '../../definitions'
 
 import knex from '../../lib/db'
-import format from 'pg-format'
 import ServerError from '../../lib/error'
+import * as ObjectUtils from '../../lib/objectUtils'
 
 import camelcaseKeys from 'camelcase-keys'
+import { getListing } from './listings'
+import snakecaseKeys from 'snakecase-keys'
 
 /**
- * @param {Schemas.Entity.User} data
+ * @param {User} data
  * @throws {Error}
  * @return {Promise}
  */
-export const registerUser = async (data: Schemas.Entity.User): Promise<Record<string, any>> => {
-    // Implement your business logic here...
-    //
-    // This function should return as follows:
-    //
-    // return {
-    //   status: 200, // Or another success code.
-    //   data: [] // Optional. You can put whatever you want here.
-    // };
-    //
-    // If an error happens during your business logic implementation,
-    // you should throw an error as follows:
-    //
-    // throw new ServerError({
-    //   status: 500, // Or another error code.
-    //   error: 'Server Error' // Or another error message.
-    // });
+export const registerUser = async (data: User): Promise<{ status: number; data: any }> => {
+    const immutableCols: RegExp[] = [/^banned$/, /^bannedBy$/, /^bannedReason$/, /^createdOn$/, /^id$/, /^roles$/]
+    if (ObjectUtils.isMatch(data, immutableCols)) {
+        throw new ServerError({
+            status: 400,
+            error: `The following fields cannot be updated: ${immutableCols.join(', ').replace(/[/^$]/g, '')}`
+        })
+    }
 
-    // Create User
-    // const res = await query('');
+    data = snakecaseKeys(data)
+
+    // Create User and User role
+    await knex().insert(data).into('users')
+    await knex()
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        .insert({ role_id: knex.raw('select get_user_role_type_id(\'USER\')') })
+        .into('user_roles')
 
     return {
         status: 200,
-        data
+        data: {
+            success: true
+        }
+    }
+}
+
+export const getUserRoles = async (id: number): Promise<{ status: number; data: { roles: string[] } }> => {
+    let userRoles = await knex
+        .select(
+            knex.ref('value').withSchema('user_roles_t')
+        )
+        .from('user_roles_t')
+        .innerJoin('user_roles', 'user_roles_t.id', '=', 'user_roles.role_id')
+        .where('user_roles.user_id', id)
+    userRoles = userRoles.map((role) => role.value)
+    return {
+        status: 200,
+        data: { roles: userRoles }
     }
 }
 
@@ -43,46 +59,21 @@ export const registerUser = async (data: Schemas.Entity.User): Promise<Record<st
  * @throws {Error}
  * @return {Promise}
  */
-export const getUser = async (options: { id?: number; username?: string; email?: string}): Promise<Record<string, any>> => {
+export const getUser = async (options: { id?: number; username?: string; email?: string}): Promise<{ status: number; data: User }> => {
     // Retrieve the user information.
-    const userResults = await knex
-        .select(
-            knex.ref('id').withSchema('users'),
-            knex.ref('value').withSchema('user_account_types_t').as('type'),
-            knex.ref('password').withSchema('users'),
-            knex.ref('given_name').withSchema('users'),
-            knex.ref('family_name').withSchema('users'),
-            knex.ref('email').withSchema('users'),
-            knex.ref('address').withSchema('users'),
-            knex.ref('phone_number_e164').withSchema('users'),
-            knex.ref('created_on').withSchema('users'),
-            knex.ref('banned').withSchema('users'),
-            knex.ref('banned_by').withSchema('users'),
-            knex.ref('banned_reason').withSchema('users')
-        )
-        .from('users')
-        .innerJoin('user_account_types_t', 'users.id', 'user_account_types_t.user_id')
-        .where(options)
+    const users = await knex.select().from('users').where(options)
 
     // Throw an error if no user was found.
-    if (userResults.length === 0) {
+    if (users.length === 0) {
         throw new ServerError({
             status: 400,
             error: 'Cannot find a user associated with the query specified.'
         })
     }
 
-    // Retrieve the user role information.
-    const user = userResults[0]
-    const userRolesResults = await knex
-        .select(
-            knex.ref('value').withSchema('user_roles_t').as('role')
-        )
-        .from('user_roles')
-        .innerJoin('user_roles_t', 'user_roles_t.id', '=', 'user_roles.id')
-        .where('user_roles.user_id', user.id)
-    user.roles = userRolesResults.map((value) => value.role)
-
+    // Retrieve the user's role information.
+    const user = users[0]
+    user.roles = await getUserRoles(user.id)
     return {
         status: 200,
         data: camelcaseKeys(user, { deep: true })
@@ -94,27 +85,22 @@ export const getUser = async (options: { id?: number; username?: string; email?:
  * @throws {Error}
  * @return {Promise}
  */
-export const updateUser = async (options: Record<string, any>): Promise<Record<string, any>> => {
-    // Implement your business logic here...
-    //
-    // This function should return as follows:
-    //
-    // return {
-    //   status: 200, // Or another success code.
-    //   data: [] // Optional. You can put whatever you want here.
-    // };
-    //
-    // If an error happens during your business logic implementation,
-    // you should throw an error as follows:
-    //
-    // throw new ServerError({
-    //   status: 500, // Or another error code.
-    //   error: 'Server Error' // Or another error message.
-    // });
+export const updateUser = async (id: number, data: User): Promise<Record<string, any>> => {
+    const immutableCols: RegExp[] = [/^banned$/, /^bannedBy$/, /^bannedReason$/, /^createdOn$/, /^id$/, /^roles$/]
+    if (ObjectUtils.isMatch(data, immutableCols)) {
+        throw new ServerError({
+            status: 400,
+            error: `The following fields cannot be updated: ${immutableCols.join(', ').replace(/[/^$]/g, '')}`
+        })
+    }
+
+    data = snakecaseKeys(data)
+
+    await knex('users').update(data).where('id', id)
 
     return {
         status: 200,
-        data: 'updateUser ok!'
+        data: 'User details updated successfully'
     }
 }
 
@@ -123,26 +109,18 @@ export const updateUser = async (options: Record<string, any>): Promise<Record<s
  * @throws {Error}
  * @return {Promise}
  */
-export const getUserListingWatchlist = async (userId: number): Promise<any> => {
-    // Implement your business logic here...
-    //
-    // This function should return as follows:
-    //
-    // return {
-    //   status: 200, // Or another success code.
-    //   data: [] // Optional. You can put whatever you want here.
-    // };
-    //
-    // If an error happens during your business logic implementation,
-    // you should throw an error as follows:
-    //
-    // throw new ServerError({
-    //   status: 500, // Or another error code.
-    //   error: 'Server Error' // Or another error message.
-    // });
+export const getUserListingWatchlist = async (userId: number): Promise<{ status: number; data: Listing[]}> => {
+    const res: Record<'listing_id', number>[] = await knex.select('listing_id').from('users_listing_watchlist').where('user_id', userId)
+    const listingIds: number[] = res.map((object) => object.listing_id)
+    const listings: Listing[] = []
+
+    // Get listing information for each ID.
+    for (const id of listingIds) {
+        listings.push((await getListing(id)).data)
+    }
 
     return {
         status: 200,
-        data: 'getUserListingWatchlist ok!'
+        data: listings
     }
 }

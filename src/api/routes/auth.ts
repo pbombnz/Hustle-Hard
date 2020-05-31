@@ -14,7 +14,10 @@ router.post('/login/email',
     middleware.auth.isNotAuthenticated,
     passport.authenticate('local', { failWithError: true }),
     async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        return res.status(200).json({ success: true })
+        return res.status(200).json({
+            status: 200,
+            success: true
+        })
     },
     async (_err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
         next(new ServerError({

@@ -10,7 +10,7 @@ import debug from 'debug'
  * Security
  */
 import helmet from 'helmet'
-import objectMask from '../lib/objectMask'
+import { mask as objectMask } from '../lib/objectUtils'
 
 /*
  * Database
@@ -52,6 +52,11 @@ import ordersByProducerRoutes from './routes/ordersByProducer'
 import ordersByListingRoutes from './routes/ordersByListing'
 import filesRoutes from './routes/files'
 
+/*
+ * Definitions
+ */
+import { User } from '../definitions'
+
 const LocalStrategy = passportLocal.Strategy
 
 debug.enable('*')
@@ -76,6 +81,13 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 /*
+ * Database Logging
+ */
+knex.addListener('query-error', (obj) => {
+    log.error(obj, 'Knex Event: query-error')
+})
+
+/*
  * Passport Strategies
  */
 passport.serializeUser<any, number>(async (user, done) => {
@@ -91,13 +103,11 @@ passport.deserializeUser<Record<string, any>, number>(async (id, done) => {
 passport.use(new LocalStrategy(
     async (username, password, done) => {
         try {
-            const rows = await knex.select('password').from('users').where('username', username)
-            const hash = rows[0].password
-            const match = await bcrypt.compare(password, hash)
+            const hash: string = (await knex.select('password').from('users').where('username', username))[0].password
+            const match: boolean = await bcrypt.compare(password, hash)
             if (match) {
                 try {
-                    let user = await usersService.getUser({ username })
-                    user = user.data
+                    const user: User = (await usersService.getUser({ username })).data
                     return done(null, user)
                 } catch (error) {
                     return done(null, false)

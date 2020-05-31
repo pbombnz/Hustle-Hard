@@ -21,9 +21,10 @@ router.get('/:id/biddings', async (req: express.Request, res: express.Response, 
  * A user can place a bidding on listing.
  */
 router.post('/:id/biddings', middleware.auth.isAuthenticated, async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
+    const listingId: number = req.params.id as unknown as number
+    const userId: number = req.user ? req.user.id as unknown as number : -1
     try {
-        // @ts-ignore
-        const result = await listing.createListingBid(parseInt(req.params.id), parseInt(req.user.id), req.body.bidAmount)
+        const result = await listing.createListingBid(listingId, userId, req.body.bidAmount)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
         next(err)

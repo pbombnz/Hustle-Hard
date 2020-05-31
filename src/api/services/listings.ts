@@ -1,49 +1,49 @@
-import pgFormat from 'pg-format'
 import snakeCaseKeys from 'snakecase-keys'
+import { flatten } from 'flat'
+import _ from 'lodash'
+
+import * as Entity from '../../definitions'
 
 import knex from '../../lib/db'
-
 import ServerError from '../../lib/error'
 
-/**
- * An object containing infomration about a Listing.
- * @typedef {Object} Listing~Create
- * @property {number} typeId
- * @property {number} categoryId
- * @property {string=} [status=ACTIVE]
- * @property {string} title
- * @property {string} subtitle
- * @property {string} description
- * @property {string=} winningInstructions
- * @property {string[]} [photoIds=[]]
- * @property {Date} expiresOn
- * @property {integer} createdBy
- * @property {Date=} createdOn
- */
+const getListingDetails = async (id: number): Promise<Entity.ListingAuction | Entity.ListingClassified | Entity.ListingMQL> => {
+    // Get listing's type-specific details
+    const auction: Entity.ListingAuction[] = await knex.select('*').from('listing_auction').where('id', id)
+    const classified: Entity.ListingClassified[] = await knex.select('*').from('listing_classified').where('id', id)
+    const mql: Entity.ListingMQL[] = await knex.select('*').from('listing_mql').where('id', id)
 
-/**
- * An object containing infomration about a Listing.
- * @typedef {Object} Listing~Update
- * @property {id} id
- * @property {string=} [status=ACTIVE]
- * @property {string=} title
- * @property {string=} subtitle
- * @property {string=} description
- * @property {string=} winningInstructions
- * @property {string[]=} [photoIds=[]]
- * @property {Date=} expiresOn
- */
+    if (auction.length === 1) {
+        return auction[0]
+    } else if (classified.length === 1) {
+        return classified[0]
+    } else if (mql.length === 1) {
+        return mql[0]
+    } else {
+        // A listing SHOULD always have ONE set of details.
+        if ((auction.length + classified.length + mql.length) > 1) {
+            // Too many details detected.
+            throw new Error(`Listing with ID ${id} has more than one set of type-specific details.`)
+        } else {
+            // No details detected.
+            throw new Error(`Listing with ID ${id} has no type-specific details.`)
+        }
+    }
+}
 
 /**
  * @param {Listing~Create} data
  * @throws {Error}
  * @return {Promise}
  */
-export const createListing = async (data: Record<string, any>): Promise<any> => {
+export const createListing = async (data: Entity.Listing): Promise<any> => {
     if (data.id) { delete data.id }
     if (data.status === null) { delete data.status }
     if (data.createdOn === null) { delete data.createdOn }
     if (data.photoIds === null) { delete data.photoIds }
+
+    const details = _.cloneDeep(data._details)
+    if (data._details) { delete data._details }
 
     try {
         const res = await knex.insert(snakeCaseKeys(data)).into('listing').returning('id')
@@ -75,12 +75,16 @@ export const createListing = async (data: Record<string, any>): Promise<any> => 
  * @throws {Error}
  * @return {Promise}
  */
-export const getListings = async (): Promise<any> => {
+export const getListings = async (): Promise<{status: number; data: Entity.Listing[]}> => {
     try {
-        const res: any[] = await knex.select('*').from('listings')
+        const listings: Entity.Listing[] = await knex.select('*').from('listings')
+        for (const listing of listings) {
+            listing._details = listing.id ? await getListingDetails(listing.id) : undefined
+        }
+
         return {
             status: 200,
-            data: res
+            data: listings
         }
     } catch (err) {
         throw new ServerError({
@@ -94,53 +98,48 @@ export const getListings = async (): Promise<any> => {
  * @throws {Error}
  * @return {Promise}
  */
-export const getListing = async (id: number): Promise<any> => {
+export const getListing = async (id: number): Promise<{ status: number; data: Entity.Listing}> => {
+    const res = await knex.select('*').from('listings').where('id', id)
+    if (res.length === 0) {
+        throw new ServerError({
+            code: 400,
+            error: `No listing found with ID ${id}.`
+        })
+    }
+    const listing: Entity.Listing = res[0]
     try {
-        const res = await knex.select('*').from('listings').where('id', id)
-        if (res.length === 0) {
-            throw new ServerError({
-                code: 400,
-                error: `No listing found with ID ${id}.`
-            })
-        }
-        return {
-            status: 200,
-            data: res[0]
-        }
-    } catch (err) {
-        if (err instanceof ServerError) {
-            throw err
-        } else {
-            throw new ServerError({
-                error: err.message
-            })
-        }
+        listing._details = await getListingDetails(id)
+    } catch (error) {
+        throw new ServerError({
+            status: 500,
+            error: error.message
+        })
+    }
+
+    return {
+        status: 200,
+        data: listing
     }
 }
 
 /**
  * @param {number} id
- * @param {...Listing~UPDATE} body
+ * @param {Entity.Listing} data
  * @throws {Error}
  * @return {Promise}
  */
-export const updateListing = async (id: number, body: Record<string, any>): Promise<any> => {
-    // Implement your business logic here...
-    //
-    // This function should return as follows:
-    //
-    // return {
-    //   status: 200, // Or another success code.
-    //   data: [] // Optional. You can put whatever you want here.
-    // };
-    //
-    // If an error happens during your business logic implementation,
-    // you should throw an error as follows:
-    //
-    // throw new ServerError({
-    //   status: 500, // Or another error code.
-    //   error: 'Server Error' // Or another error message.
-    // });
+export const updateListing = async (id: number, data: Entity.Listing): Promise<any> => {
+    if (data.id) { delete data.id }
+    if (data.status === null) { delete data.status }
+    if (data.createdOn === null) { delete data.createdOn }
+    if (data.photoIds === null) { delete data.photoIds }
+    if (data._details) {
+        flatten(snakeCaseKeys(data._details), { delimiter: '__' })
+        // Unflatten details to __
+        // FInd which detail to update
+        // Update details
+    }
+    await knex('listings').update(data)
 
     return {
         status: 200,

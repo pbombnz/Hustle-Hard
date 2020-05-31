@@ -13,17 +13,17 @@ interface MaskingOption {
  * where it may not be ideal to show the user the field. Such examples could include passwords,
  * credit card information and other PPI.
  *
- * @param {Record<string, any>} object
+ * @param {Record<string, any>} input
  * @param {Array<RegExp | MaskingOption>} options
+ * @returns {Record<string, any>}
  */
-export default (object: Record<string, any>, options: Array<RegExp | MaskingOption>): object => {
-    const deep: Record<string, any> = flatten<Record<string, any>, Record<string, any>>(object)
-
+export const mask = (input: Record<string, any>, options: Array<RegExp | MaskingOption>): Record<string, any> => {
+    input = flatten(input)
     // Converts all string-based elements into MaskingOptions
     const _options: Array<MaskingOption> = options.map((opt) => opt instanceof RegExp ? { match: opt } : opt)
 
     const keysToBeHidden = []
-    for (const key in deep) {
+    for (const key in input) {
         for (const o of _options) {
             // Do not progress if no match is detected.
             if (!key.match(o.match)) { continue }
@@ -36,21 +36,55 @@ export default (object: Record<string, any>, options: Array<RegExp | MaskingOpti
             // Set the field explictly to be a static string OR calcuated based on the key and/or value  (user specified).
             if (o.set) {
                 if (typeof o.set === 'function') {
-                    deep[key] = o.set(key, deep[key])
+                    input[key] = o.set(key, input[key])
                 } else if (typeof o.set === 'string') {
-                    deep[key] = o.set
+                    input[key] = o.set
                 }
                 continue
             }
 
             // Generic mask apply if other options weren't set.
-            deep[key] = '******'
+            input[key] = '******'
         }
     }
 
     for (const key of keysToBeHidden) {
-        delete deep[key]
+        delete input[key]
     }
 
-    return unflatten(deep)
+    return unflatten(input)
+}
+
+export const hide = (input: Record<string, any>, options: Array<RegExp>): Record<string, any> => {
+    input = flatten(input)
+
+    const keysToBeHidden = []
+    for (const key in input) {
+        for (const o of options) {
+            // Do not progress if no match is detected.
+            if (key.match(o)) {
+                keysToBeHidden.push(key)
+            }
+        }
+    }
+
+    for (const key of keysToBeHidden) {
+        delete input[key]
+    }
+
+    return unflatten(input)
+}
+
+export const isMatch = (input: Record<string, any>, options: Array<RegExp>): boolean => {
+    input = flatten(input)
+
+    for (const key in input) {
+        for (const o of options) {
+            // Do not progress if no match is detected.
+            if (key.match(o)) {
+                return true
+            }
+        }
+    }
+    return false
 }

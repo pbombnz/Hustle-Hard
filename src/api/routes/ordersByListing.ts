@@ -8,12 +8,10 @@ const router = express.Router()
  * call.
  */
 router.get('/:listingId', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
-    const options = {
-        listingId: req.params.listingId
-    }
+    const listingId: number = req.params.listingId as unknown as number
 
     try {
-        const result = await ordersByListing.getOrdersByListingId(options)
+        const result = await ordersByListing.getOrdersByListingId(listingId)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
         res.status(500).send({

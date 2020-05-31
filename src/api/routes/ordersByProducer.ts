@@ -8,12 +8,10 @@ const router = express.Router()
  * is the prodcuer.
  */
 router.get('/:userId', async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
-    const options = {
-        userId: req.params.userId
-    }
+    const userId: number = req.params.userId as unknown as number
 
     try {
-        const result = await ordersByProducer.getProducerOrdersByUserId(options)
+        const result = await ordersByProducer.getProducerOrdersByUserId(userId)
         res.status(result.status || 200).send(result.data)
     } catch (err) {
         res.status(500).send({

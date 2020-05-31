@@ -14,7 +14,7 @@ router.post('/',
     middleware.auth.isNotAuthenticated,
     async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
         try {
-            const result = await users.registerUser(req.body as Schemas.Entity.User)
+            const result = await users.registerUser(req.body as Schemas.User)
             res.status(result.status || 200).send(result.data)
         } catch (err) {
             res.status(500).send({
@@ -41,12 +41,11 @@ router.get('/',
 router.put('/',
     middleware.auth.isAuthenticated,
     async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
-        const options = {
-            body: req.body
-        }
+        // @ts-ignore
+        const userId: number = req.user.id
 
         try {
-            const result = await users.updateUser(options)
+            const result = await users.updateUser(userId, req.body)
             res.status(result.status || 200).send(result.data)
         } catch (err) {
             res.status(500).send({

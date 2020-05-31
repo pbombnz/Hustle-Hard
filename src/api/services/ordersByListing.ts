@@ -1,30 +1,22 @@
 import ServerError from '../../lib/error'
+import knex from '../../lib/db'
+
 /**
- * @param {Object} options
- * @param {Integer} options.listingId
+ * @param {Integer} listingId
  * @throws {Error}
  * @return {Promise}
  */
-export const getOrdersByListingId = async (options: Record<string, any>): Promise<any> => {
-    // Implement your business logic here...
-    //
-    // This function should return as follows:
-    //
-    // return {
-    //   status: 200, // Or another success code.
-    //   data: [] // Optional. You can put whatever you want here.
-    // };
-    //
-    // If an error happens during your business logic implementation,
-    // you should throw an error as follows:
-    //
-    // throw new ServerError({
-    //   status: 500, // Or another error code.
-    //   error: 'Server Error' // Or another error message.
-    // });
+export const getOrdersByListingId = async (listingId: number): Promise<{status: number; data: any}> => {
+    const res = await knex.select('order_id').from('order_items').where('listing_id', '=', listingId)
+    const orderIds = res.map((row) => row.order_id)
+    const orders = []
 
+    for (const orderId of orderIds) {
+        const order = await knex.select().from('orders').where('id', '=', orderId)
+        orders.push(order)
+    }
     return {
         status: 200,
-        data: 'getOrdersByListingId ok!'
+        data: orders
     }
 }
