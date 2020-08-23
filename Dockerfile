@@ -6,6 +6,7 @@ ADD ./ ./
 
 # Install modules and build application.
 RUN npm install --silent
+# RUN npm install --verbose
 RUN npm run prestart
 
 # Expose web service and debugging ports

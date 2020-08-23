@@ -17,3 +17,7 @@ open http://localhost:8080/docs
 ```
 
 This project leverages the mega-awesome [swagger-tools](https://github.com/apigee-127/swagger-tools) middleware which does most all the work.
+
+
+docker stop adb; docker rm adb; docker rmi auction_db:latest; docker build -t auction_db:latest .; docker run --name adb -p 5432:5432 auction_db:latest;
+docker stop ab; docker rm ab; docker rmi auction_backend:latest; docker build -t auction_backend:latest .; docker run --name ab -p 8080:8080 -p 9229:9229 auction_backend:latest;

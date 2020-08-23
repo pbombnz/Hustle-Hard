@@ -1,47 +1,35 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use strict'
 
-/*
- * Debug
- */
+// Debug
 import debug from 'debug'
 
-/*
- * Security
- */
+// Security
 import helmet from 'helmet'
 import { mask as objectMask } from '../lib/objectUtils'
 
-/*
- * Database
- */
+// Database and File Storage
 import knex from '../lib/db'
+//import aws from 'aws-sdk'
+//import multer from 'multer'
+//import multerS3 from 'multer-s3'
 
-/*
- * Express Related
- */
+// Express and Express Related
 import express from 'express'
 import session from 'express-session'
 import cookieParser from 'cookie-parser'
 import bodyParser from 'body-parser'
-import config from '../lib/config'
 import logger from '../lib/logger'
 
-/*
- * Authentication / Passport
- */
+// Authentication / Passport
 import bcrypt from 'bcrypt'
 import passport from 'passport'
 import passportLocal from 'passport-local'
 
-/*
- * Services
- */
+// Services
 import * as usersService from '../api/services/users'
 
-/*
- * Routes
- */
+// Routes
 import usersRoutes from './routes/users'
 import authRoutes from './routes/auth'
 import listingsRoutes from './routes/listings'
@@ -52,16 +40,14 @@ import ordersByProducerRoutes from './routes/ordersByProducer'
 import ordersByListingRoutes from './routes/ordersByListing'
 import filesRoutes from './routes/files'
 
-/*
- * Definitions
- */
+// Type Definitions
 import { User } from '../definitions'
 
 const LocalStrategy = passportLocal.Strategy
 
 debug.enable('*')
 
-const log = logger(config.logger)
+const log = logger()
 const app: express.Express = express()
 
 app.use(helmet())
@@ -80,16 +66,12 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-/*
- * Database Logging
- */
+// Database Logging
 knex.addListener('query-error', (obj) => {
     log.error(obj, 'Knex Event: query-error')
 })
 
-/*
- * Passport Strategies
- */
+// Passport Strategies
 passport.serializeUser<any, number>(async (user, done) => {
     console.log('serializeUser')
     done(null, user.id)

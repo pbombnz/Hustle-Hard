@@ -5,10 +5,9 @@
  */
 import app from '../api'
 import http from 'http'
-import config from '../lib/config'
 import logger from '../lib/logger'
 
-const log = logger(config.logger)
+const log = logger()
 
 /**
  * Normalize a port into a number, string, or false.
@@ -32,7 +31,7 @@ const normalizePort = (val: any): number | string | false => {
 /**
  * Get port from environment and store in Express.
  */
-const port = normalizePort(config.api.port || '3000')
+const port = normalizePort('8080')
 app.set('port', port)
 
 /// Create HTTP server.

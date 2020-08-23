@@ -42,9 +42,6 @@ export const createListing = async (data: Entity.Listing): Promise<any> => {
     if (data.createdOn === null) { delete data.createdOn }
     if (data.photoIds === null) { delete data.photoIds }
 
-    const details = _.cloneDeep(data._details)
-    if (data._details) { delete data._details }
-
     try {
         const res = await knex.insert(snakeCaseKeys(data)).into('listing').returning('id')
         if (res.length === 0) {
@@ -78,9 +75,9 @@ export const createListing = async (data: Entity.Listing): Promise<any> => {
 export const getListings = async (): Promise<{status: number; data: Entity.Listing[]}> => {
     try {
         const listings: Entity.Listing[] = await knex.select('*').from('listings')
-        for (const listing of listings) {
-            listing._details = listing.id ? await getListingDetails(listing.id) : undefined
-        }
+        //for (const listing of listings) {
+        //    listing._details = listing.id ? await getListingDetails(listing.id) : undefined
+        //}
 
         return {
             status: 200,
@@ -107,14 +104,14 @@ export const getListing = async (id: number): Promise<{ status: number; data: En
         })
     }
     const listing: Entity.Listing = res[0]
-    try {
-        listing._details = await getListingDetails(id)
-    } catch (error) {
-        throw new ServerError({
-            status: 500,
-            error: error.message
-        })
-    }
+    // try {
+    //     listing._details = await getListingDetails(id)
+    // } catch (error) {
+    //     throw new ServerError({
+    //         status: 500,
+    //         error: error.message
+    //     })
+    // }
 
     return {
         status: 200,
@@ -133,12 +130,12 @@ export const updateListing = async (id: number, data: Entity.Listing): Promise<a
     if (data.status === null) { delete data.status }
     if (data.createdOn === null) { delete data.createdOn }
     if (data.photoIds === null) { delete data.photoIds }
-    if (data._details) {
-        flatten(snakeCaseKeys(data._details), { delimiter: '__' })
-        // Unflatten details to __
-        // FInd which detail to update
-        // Update details
-    }
+    // if (data._details) {
+    //     flatten(snakeCaseKeys(data._details), { delimiter: '__' })
+    //     // Unflatten details to __
+    //     // FInd which detail to update
+    //     // Update details
+    // }
     await knex('listings').update(data)
 
     return {
